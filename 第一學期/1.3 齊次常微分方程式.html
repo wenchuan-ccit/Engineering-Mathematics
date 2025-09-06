@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動力系工程數學(上):齊次常微分方程式</title>
+    <script type="text/javascript">
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #fdfcfb;
+            color: #44403c;
+        }
+        .math-display {
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 0.5rem 0;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .math-display::-webkit-scrollbar {
+            display: none;
+        }
+        .active-tab {
+            background-color: #0d9488;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .inactive-tab {
+            background-color: #f1f5f9;
+            color: #334155;
+        }
+        .accordion-header-active {
+            background-color: #f0fdfa;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .accordion-content.show {
+            max-height: 2000px;
+        }
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+        .text-justify {
+            text-align: justify;
+        }
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            pointer-events: none;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+            pointer-events: auto;
+        }
+        .modal-overlay.show .modal-container {
+             transform: translate(-50%, -50%) scale(1);
+        }
+        .blinking-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.2rem;
+            background-color: #44403c;
+            animation: blink 1s step-end infinite;
+            margin-left: 2px;
+        }
+        @keyframes blink {
+            from, to { background-color: transparent }
+            50% { background-color: #44403c; }
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-teal-700">
+                        動力系 工程數學(上)&nbsp;&nbsp;&nbsp;&nbsp;授課老師:吳文銓
+                    </h1>
+                    <p class="text-sm text-stone-500">參考書:Advanced Engineering Mathematics Abridged Version（TW Custom. Ed.） 10/e Kreyszig</p>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-center space-x-4">
+                        <a href="#concepts" class="text-stone-600 hover:bg-teal-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium">核心概念</a>
+                        <a href="#examples" class="text-stone-600 hover:bg-teal-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium">例題範例</a>
+                        <a href="#practice" class="text-stone-600 hover:bg-teal-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium">動手練習</a>
+                        <button id="api-key-modal-trigger" class="text-stone-500 hover:text-teal-600 transition-colors duration-200" title="設定 AI API Key">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key-round"><path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z"></path><circle cx="16.5" cy="7.5" r=".5"></circle></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <section id="intro" class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-teal-800 mb-4">1.3 齊次常微分方程式</h2>
+            <p class="max-w-3xl mx-auto text-lg text-stone-600">Homogeneous Ordinary Differential Equations</p>
+        </section>
+
+        <section id="concepts" class="mb-16 scroll-mt-20">
+            <h3 class="text-2xl md:text-3xl font-bold text-center mb-10 text-stone-700">第一部分：核心概念</h3>
+            <div class="space-y-8">
+                <div class="bg-white p-6 rounded-lg shadow-lg border border-stone-200">
+                    <h4 class="text-xl font-bold mb-3 text-teal-700">🤔 課程摘要</h4>
+                    <p class="text-stone-600 text-justify">並非所有的一階 ODE 都能直接分離變數。然而，有一類特殊的方程式，稱為「齊次微分方程式」，可以透過巧妙的變數代換，將其轉換為可分離變數的形式來求解。本章節的核心就是學習如何辨識齊次 ODE 並掌握這種代換技巧。</p>
+                    <ul class="list-disc list-inside mt-4 space-y-2 text-stone-600">
+                        <li><b>齊次函數 (Homogeneous Function)</b><br>
+                        一個函數 $f(x, y)$ 如果滿足 $f(tx, ty) = t^n f(x, y)$，則稱其為 $n$ 次齊次函數。簡單來說，就是將 $x$ 換成 $tx$、$y$ 換成 $ty$ 後，可以提出一個 $t^n$ 的公因數。
+                        </li>
+                        <li><b>齊次微分方程式 (Homogeneous ODE)</b><br>
+                        對於全微分形式 $M(x,y)dx + N(x,y)dy = 0$，如果 $M(x,y)$ 和 $N(x,y)$ 都是同次數的齊次函數，則此方程式為齊次 ODE。另一種等價的判斷方式是，若方程式可寫成 $y' = f(\frac{y}{x})$ 的形式，它就是齊次的。
+                        </li>
+                         <li><b>關鍵的變數代換</b><br>
+                         解齊次 ODE 的關鍵技巧是進行變數代換。我們有兩種選擇：
+                         <ol class="list-decimal list-inside ml-4 mt-2">
+                            <li>令 $y = ux$，則 $dy = u dx + x du$。</li>
+                            <li>令 $x = vy$，則 $dx = v dy + y dv$。</li>
+                         </ol>
+                         通常，如果 $N(x,y)$ 比 $M(x,y)$ 簡單，我們會選擇 $y=ux$；反之，若 $M$ 比 $N$ 簡單，則選 $x=vy$ 會讓計算稍微簡便。
+                        </li>
+                         <li><b>解題標準流程</b><br>
+                         <ol class="list-decimal list-inside ml-4 mt-2">
+                            <li><b>檢查齊次性</b>: 確認 $M, N$ 為同次齊次函數。</li>
+                            <li><b>變數代換</b>: 選擇 $y=ux$ 或 $x=vy$ 並計算 $dy$ 或 $dx$。</li>
+                            <li><b>代入化簡</b>: 將代換式代入原 ODE，化簡並消去共同的 $x^n$ 或 $y^n$ 項。</li>
+                            <li><b>分離變數</b>: 化簡後的方程式會變成一個關於新變數 (u 或 v) 和原自變數 (x 或 y) 的可分離變數 ODE。</li>
+                            <li><b>積分求解</b>: 對分離變數後的方程式兩邊積分。</li>
+                            <li><b>還原變數</b>: 將 $u=\frac{y}{x}$ 或 $v=\frac{x}{y}$ 代換回來，得到原方程式的解。</li>
+                         </ol>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="examples" class="mb-16 scroll-mt-20">
+            <h3 class="text-2xl md:text-3xl font-bold text-center mb-10 text-stone-700">第二部分：例題範例</h3>
+            <p class="text-center text-stone-600 max-w-2xl mx-auto mb-8">請選擇題型範例。每個範例都將引導您完成從「觀察分析」到「解題」的完整流程。</p>
+            <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-stone-200">
+                <div id="example-tabs-container" class="flex flex-wrap gap-2 mb-6"></div>
+                <div id="example-content-container"></div>
+            </div>
+        </section>
+
+        <section id="practice" class="mb-16 scroll-mt-20">
+            <h3 class="text-2xl md:text-3xl font-bold text-center mb-10 text-stone-700">第三部分：動手練習</h3>
+            <p class="text-center text-stone-600 max-w-2xl mx-auto mb-8">現在輪到您了！共八道精心挑選的題目，前五題為基礎練習，後三題為頂尖大學的考古題。您可以點擊「提示」按鈕查看分析思路，或輸入密碼解鎖完整解答。</p>
+            <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 border border-stone-200">
+                <div id="practice-tabs-container" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 mb-6"></div>
+                <div id="practice-content-container"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white mt-16">
+        <div class="container mx-auto px-8 py-4 text-center text-stone-500">
+            <p>&copy; 工程數學互動教學</p>
+        </div>
+    </footer>
+    
+    <div id="api-key-modal" class="modal-overlay">
+        <div class="modal-container">
+            <button id="api-key-modal-close" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            <div>
+                <h3 class="text-xl font-bold mb-4 text-stone-700">設定 Google AI Studio API Key</h3>
+                <p class="mb-4 text-stone-600">請輸入您的 API Key 以啟用 AI 助教功能。您的 Key 將只會儲存在您的瀏覽器中。</p>
+                <input id="api-key-input" type="password" placeholder="請在此輸入 API Key" class="w-full px-4 py-2 rounded-md border-2 border-gray-300 focus:border-teal-500 focus:outline-none">
+                <div class="flex justify-end gap-4 mt-6">
+                    <button id="api-key-save" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md shadow-md transition-transform transform hover:scale-105">儲存</button>
+                    <button id="api-key-modal-cancel" class="bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold py-2 px-4 rounded-md shadow-md transition-transform transform hover:scale-105">取消</button>
+                </div>
+                 <p id="save-status" class="text-sm text-green-600 mt-2 h-4"></p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="ai-tutor-modal" class="modal-overlay">
+        <div id="ai-tutor-modal-container" class="modal-container">
+            <div id="ai-tutor-modal-header" class="w-full pb-4 border-b border-gray-200 cursor-move">
+                 <h3 class="text-xl font-bold text-teal-700">AI 助教語音解說</h3>
+            </div>
+            <button id="ai-tutor-modal-close" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            <div id="ai-tutor-status" class="text-stone-700 leading-relaxed space-y-4 min-h-[50px] mt-4"></div>
+            <audio id="ai-tutor-audio" class="w-full mt-4" controls></audio>
+        </div>
+    </div>
+
+
+    <script>
+        window.addEventListener('load', async () => {
+            const examples = [
+                {
+                    title: '齊次 ODE (I)',
+                    problem: '解 $(4x^2+y^2)dx - xydy = 0$。',
+                    source: '改編自講義例題 1-3-1',
+                    analysis: '首先檢查齊次性。$M=4x^2+y^2$ 是二次齊次，$N=-xy$ 也是二次齊次。因此，這是一個齊次 ODE。這裡 $N$ 的形式比 $M$ 簡單，我們選擇代換 $y=ux$。',
+                    steps: [
+                        {
+                            title: '步驟 1：變數代換',
+                            content: `令 $y = ux$，則 $dy = u dx + x du$。`
+                        },
+                        {
+                            title: '步驟 2：代入與化簡',
+                            content: `$$ (4x^2 + (ux)^2)dx - x(ux)(u dx + x du) = 0 $$
+                                      $$ (4x^2 + u^2x^2)dx - ux(u dx + x du) = 0 $$
+                                      <p>提出公因數 $x^2$ 並消去：</p>
+                                      $$ (4 + u^2)dx - u(u dx + x du) = 0 $$
+                                      $$ 4dx + u^2dx - u^2dx - ux du = 0 $$
+                                      $$ 4dx = ux du $$`
+                        },
+                        {
+                            title: '步驟 3：分離變數與積分',
+                            content: `$$ \\frac{4}{x}dx = u du $$
+                                      $$ \\int \\frac{4}{x}dx = \\int u du $$
+                                      $$ 4\\ln|x| = \\frac{1}{2}u^2 + C $$`
+                        },
+                        {
+                            title: '步驟 4：還原變數',
+                            content: `將 $u = \\frac{y}{x}$ 代回：
+                                     $$ 4\\ln|x| = \\frac{1}{2}(\\frac{y}{x})^2 + C $$`
+                        }
+                    ]
+                },
+                {
+                    title: '齊次 ODE (II)',
+                    problem: '解 $(y+xe^{y/x})dx - xdy = 0$，並滿足 $y(1)=2$。',
+                    source: '改編自講義例題 1-3-2',
+                    analysis: '檢查齊次性：$M=y+xe^{y/x}$，測試 $M(tx, ty) = ty + txe^{ty/tx} = t(y+xe^{y/x})=t^1 M$，所以 $M$ 是一次齊次。$N=-x$ 也是一次齊次。故此為齊次 ODE。適合使用 $y=ux$ 代換。',
+                    steps: [
+                        {
+                            title: '步驟 1：變數代換',
+                            content: `令 $y=ux$，則 $dy = udx + xdu$，且 $\\frac{y}{x}=u$。`
+                        },
+                        {
+                            title: '步驟 2：代入與化簡',
+                            content: `$$ (ux + xe^u)dx - x(udx + xdu) = 0 $$
+                                      <p>提出公因數 $x$ 並消去：</p>
+                                      $$ (u+e^u)dx - (udx+xdu) = 0 $$
+                                      $$ udx + e^udx - udx - xdu = 0 $$
+                                      $$ e^udx = xdu $$`
+                        },
+                        {
+                            title: '步驟 3：分離變數與積分',
+                            content: `$$ \\frac{1}{x}dx = e^{-u}du $$
+                                      $$ \\int \\frac{1}{x}dx = \\int e^{-u}du $$
+                                      $$ \\ln|x| = -e^{-u} + C $$`
+                        },
+                         {
+                            title: '步驟 4：還原變數',
+                            content: `將 $u = y/x$ 代回，得到通解：
+                                     $$ \\ln|x| = -e^{-y/x} + C $$`
+                        },
+                         {
+                            title: '步驟 5：代入初始條件',
+                            content: `代入 $x=1, y=2$：
+                                     $$ \\ln|1| = -e^{-2/1} + C \\implies 0 = -e^{-2} + C $$
+                                     $$ C = e^{-2} $$
+                                     <p>因此特解為 $\\ln|x| = -e^{-y/x} + e^{-2}$。</p>`
+                        }
+                    ]
+                }
+            ];
+            const practiceExamples = [
+                {
+                    title: '問題一',
+                    problem: '$xydy = (2x^2+y^2)dx$',
+                    analysis: '$M=-(2x^2+y^2)$ 和 $N=xy$ 都是二次齊次。適合用 $y=ux$ 代換。',
+                    steps: [
+                        { title: '步驟 1: 代換化簡', content: '$x(ux)(udx+xdu) = (2x^2+(ux)^2)dx \\implies u(udx+xdu)=(2+u^2)dx \\implies u^2dx+uxdu=2dx+u^2dx \\implies uxdu = 2dx$。' },
+                        { title: '步驟 2: 積分', content: '$u du = \\frac{2}{x}dx \\implies \\int u du = \\int \\frac{2}{x}dx \\implies \\frac{1}{2}u^2 = 2\\ln|x|+C$。' },
+                        { title: '步驟 3: 還原', content: '$\\frac{1}{2}(\\frac{y}{x})^2 = 2\\ln|x|+C$。' }
+                    ]
+                },
+                {
+                    title: '問題二',
+                    problem: '$(x-y)dx+xdy=0$',
+                    analysis: '$M=x-y$ 和 $N=x$ 都是一次齊次。$N$ 的形式簡單，使用 $y=ux$ 代換。',
+                    steps: [
+                        { title: '步驟 1: 代換化簡', content: '$(x-ux)dx + x(udx+xdu)=0 \\implies (1-u)dx+(udx+xdu)=0 \\implies dx+xdu=0$。' },
+                        { title: '步驟 2: 積分', content: '$\\frac{dx}{x} = -du \\implies \\ln|x| = -u+C$。' },
+                        { title: '步驟 3: 還原', content: '$\\ln|x| = -\\frac{y}{x}+C$。' }
+                    ]
+                },
+                {
+                    title: '問題三',
+                    problem: '$y\' = \\frac{y}{x} + \\cos(\\frac{y}{x})$',
+                    analysis: '方程式已經是 $y\'=f(y/x)$ 的形式，是齊次 ODE。直接令 $u=y/x$。',
+                    steps: [
+                        { title: '步驟 1: 代換', content: '令 $u=y/x$，則 $y=ux \\implies y\'=u+xu\'$。' },
+                        { title: '步驟 2: 化簡', content: '$u+xu\' = u + \\cos(u) \\implies xu\' = \\cos(u)$。' },
+                        { title: '步驟 3: 積分', content: '$\\frac{du}{\\cos u} = \\frac{dx}{x} \\implies \\int \\sec u du = \\int \\frac{dx}{x} \\implies \\ln|\\sec u + \\tan u| = \\ln|x|+C_1$。' },
+                        { title: '步驟 4: 還原', content: '$\\sec(\\frac{y}{x})+\\tan(\\frac{y}{x}) = Cx$。' }
+                    ]
+                },
+                {
+                    title: '問題四',
+                    problem: '$(x^2+y^2)dx + 2xydy = 0$',
+                    analysis: '$M=x^2+y^2$ 和 $N=2xy$ 都是二次齊次。',
+                    steps: [
+                        { title: '步驟 1: 代換化簡', content: '$(x^2+(ux)^2)dx+2x(ux)(udx+xdu)=0 \\implies (1+u^2)dx+2u(udx+xdu)=0 \\implies (1+3u^2)dx+2uxdu=0$。' },
+                        { title: '步驟 2: 積分', content: '$\\frac{dx}{x} = -\\frac{2u}{1+3u^2}du \\implies \\ln|x| = -\\frac{1}{3}\\ln(1+3u^2)+C_1 \\implies 3\\ln|x|+\\ln(1+3u^2)=C$。' },
+                        { title: '步驟 3: 還原', content: '$\\ln|x^3(1+3(y/x)^2)|=C \\implies x^3(1+3y^2/x^2)=C_2 \\implies x(x^2+3y^2)=C_2$。' }
+                    ]
+                },
+                {
+                    title: '問題五',
+                    problem: '$y^2dx + (x^2-xy)dy=0$',
+                    analysis: '$M=y^2$ 和 $N=x^2-xy$ 都是二次齊次。$M$ 形式更簡單，考慮使用 $x=vy$ 代換。',
+                    steps: [
+                        { title: '步驟 1: 代換', content: '令 $x=vy$，則 $dx=vdy+ydv$。' },
+                        { title: '步驟 2: 化簡', content: '$y^2(vdy+ydv)+((vy)^2-vy\\cdot y)dy=0 \\implies (vdy+ydv)+(v^2-v)dy=0 \\implies ydv + v^2dy=0$。' },
+                        { title: '步驟 3: 積分', content: '$\\frac{dv}{v^2} = -\\frac{dy}{y} \\implies -\\frac{1}{v} = -\\ln|y|+C$。' },
+                        { title: '步驟 4: 還原', content: '將 $v=x/y$ 代回: $-\\frac{y}{x} = -\\ln|y|+C$ 或 $\\ln|y| - \\frac{y}{x} = C$。' }
+                    ]
+                },
+                {
+                    title: '問題六',
+                    problem: '解 $xy\' = y + \\sqrt{x^2-y^2}$ for $x>0$。',
+                    source: '改編自台灣大學考古題',
+                    analysis: '將方程式改寫為 $y\' = \\frac{y}{x} + \\sqrt{1-(\\frac{y}{x})^2}$，是 $y\'=f(y/x)$ 的形式，為齊次 ODE。',
+                    steps: [
+                        { title: '步驟 1: 代換', content: '令 $y=ux$，則 $y\'=u+xu\'$。' },
+                        { title: '步驟 2: 化簡', content: '$u+xu\' = u+\\sqrt{1-u^2} \\implies xu\'=\\sqrt{1-u^2}$。' },
+                        { title: '步驟 3: 積分', content: '$\\frac{du}{\\sqrt{1-u^2}} = \\frac{dx}{x} \\implies \\sin^{-1}(u)=\\ln|x|+C$。' },
+                        { title: '步驟 4: 還原', content: '$\\sin^{-1}(\\frac{y}{x}) = \\ln x + C$ (因為 $x>0$)' }
+                    ]
+                },
+                {
+                    title: '問題七',
+                    problem: '解 $(x\\sin(\\frac{y}{x}) - y\\cos(\\frac{y}{x}))dx + x\\cos(\\frac{y}{x})dy = 0$。',
+                    source: '改編自清華大學考古題',
+                    analysis: '每個函數項都是一次齊次。例如 $(x\\sin(y/x))(tx,ty) = tx \\sin(ty/tx) = t(x\\sin(y/x))$。$N$ 的形式較簡單，使用 $y=ux$。',
+                    steps: [
+                        { title: '步驟 1: 代換', content: '令 $y=ux, dy=udx+xdu$。' },
+                        { title: '步驟 2: 化簡', content: '$(x\\sin u - ux\\cos u)dx + x\\cos u(udx+xdu)=0 \\implies (\\sin u - u\\cos u)dx + \\cos u(udx+xdu)=0 \\implies \\sin u dx + x\\cos u du = 0$。' },
+                        { title: '步驟 3: 積分', content: '$\\frac{dx}{x} = -\\frac{\\cos u}{\\sin u}du \\implies \\ln|x| = -\\ln|\\sin u|+C_1 \\implies \\ln|x\\sin u|=C_1$。' },
+                        { title: '步驟 4: 還原', content: '$x\\sin(y/x) = C$。' }
+                    ]
+                },
+                {
+                    title: '問題八',
+                    problem: '解 $y\' = \\frac{2xy}{x^2-y^2}$。',
+                    source: '改編自交通大學考古題',
+                    analysis: '分子分母都是二次齊次函數，為齊次 ODE。',
+                    steps: [
+                        { title: '步驟 1: 代換', content: '令 $y=ux, y\'=u+xu\'$。' },
+                        { title: '步驟 2: 化簡', content: '$u+xu\' = \\frac{2x(ux)}{x^2-(ux)^2} = \\frac{2u}{1-u^2} \\implies xu\' = \\frac{2u}{1-u^2}-u=\\frac{u+u^3}{1-u^2}$。' },
+                        { title: '步驟 3: 積分', content: '$\\frac{1-u^2}{u(1+u^2)}du = \\frac{dx}{x}$。左邊用部分分式拆解為 $(\\frac{1}{u}-\\frac{2u}{1+u^2})du$。積分得 $\\ln|u|-\\ln(1+u^2)=\\ln|x|+C_1$。' },
+                        { title: '步驟 4: 還原', content: '$\\ln|\\frac{u}{1+u^2}|=\\ln|Cx| \\implies \\frac{u}{1+u^2}=Cx \\implies \\frac{y/x}{1+(y/x)^2}=Cx \\implies \\frac{xy}{x^2+y^2}=Cx \\implies y=C(x^2+y^2)$。' }
+                    ]
+                }
+            ];
+            
+            // DOM Elements
+            const exampleTabsContainer = document.getElementById('example-tabs-container');
+            const exampleContentContainer = document.getElementById('example-content-container');
+            const practiceTabsContainer = document.getElementById('practice-tabs-container');
+            const practiceContentContainer = document.getElementById('practice-content-container');
+            
+            let activeExampleIndex = 0;
+            let activePracticeIndex = 0;
+
+            const apiKeyModal = document.getElementById('api-key-modal');
+            const aiTutorModal = document.getElementById('ai-tutor-modal');
+            const aiTutorModalContainer = document.getElementById('ai-tutor-modal-container');
+            const aiTutorModalHeader = document.getElementById('ai-tutor-modal-header');
+
+            function setupModal(modal, triggerId, closeButtonId) {
+                const trigger = document.getElementById(triggerId);
+                const closeBtn = document.getElementById(closeButtonId);
+                
+                if (trigger) {
+                    trigger.addEventListener('click', () => {
+                       modal.classList.add('show');
+                       if (modal.id === 'api-key-modal') {
+                           modal.querySelector('.modal-container').style.transform = 'translate(-50%, -50%) scale(1)';
+                       }
+                    });
+                }
+                
+                const closeModal = () => {
+                    modal.classList.remove('show');
+                    if (modal.id === 'ai-tutor-modal') {
+                        const audioPlayer = document.getElementById('ai-tutor-audio');
+                        audioPlayer.pause();
+                        audioPlayer.currentTime = 0;
+                    }
+                };
+
+                if (closeBtn) closeBtn.addEventListener('click', closeModal);
+                if(modal.id !== 'ai-tutor-modal') {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            closeModal();
+                        }
+                    });
+                }
+            }
+
+            setupModal(apiKeyModal, 'api-key-modal-trigger', 'api-key-modal-close');
+            setupModal(aiTutorModal, null, 'ai-tutor-modal-close');
+            document.getElementById('api-key-modal-cancel').addEventListener('click', () => apiKeyModal.classList.remove('show'));
+            
+            function makeDraggable(modal, header) {
+                let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                let isDragging = false;
+                header.onmousedown = dragMouseDown;
+
+                function dragMouseDown(e) {
+                    e = e || window.event;
+                    e.preventDefault();
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    isDragging = true;
+                    document.onmouseup = closeDragElement;
+                    document.onmousemove = elementDrag;
+                }
+
+                function elementDrag(e) {
+                    if (!isDragging) return;
+                    e = e || window.event;
+                    e.preventDefault();
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    modal.style.top = (modal.offsetTop - pos2) + "px";
+                    modal.style.left = (modal.offsetLeft - pos1) + "px";
+                    modal.style.transform = 'none'; 
+                }
+
+                function closeDragElement() {
+                    isDragging = false;
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                }
+            }
+            makeDraggable(aiTutorModalContainer, aiTutorModalHeader);
+
+            const apiKeySaveButton = document.getElementById('api-key-save');
+            const apiKeyInput = document.getElementById('api-key-input');
+            const saveStatus = document.getElementById('save-status');
+
+            apiKeySaveButton.addEventListener('click', () => {
+                const key = apiKeyInput.value.trim();
+                if (key) {
+                    localStorage.setItem('googleApiKey', key);
+                    saveStatus.textContent = 'API Key 已儲存！';
+                } else {
+                    localStorage.removeItem('googleApiKey');
+                    saveStatus.textContent = 'API Key 已清除。';
+                }
+                renderExampleContent(activeExampleIndex);
+                setTimeout(() => {
+                    apiKeyModal.classList.remove('show');
+                    saveStatus.textContent = '';
+                }, 1000);
+            });
+            
+            const aiTutorStatus = document.getElementById('ai-tutor-status');
+            const aiTutorAudio = document.getElementById('ai-tutor-audio');
+
+            function base64ToArrayBuffer(base64) {
+                const binaryString = window.atob(base64);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes.buffer;
+            }
+
+            function pcmToWav(pcmData, sampleRate) {
+                const numChannels = 1;
+                const bytesPerSample = 2;
+                const blockAlign = numChannels * bytesPerSample;
+                const byteRate = sampleRate * blockAlign;
+                const dataSize = pcmData.length * bytesPerSample;
+                const buffer = new ArrayBuffer(44 + dataSize);
+                const view = new DataView(buffer);
+
+                view.setUint32(0, 0x52494646, false);
+                view.setUint32(4, 36 + dataSize, true);
+                view.setUint32(8, 0x57415645, false);
+                view.setUint32(12, 0x666d7420, false);
+                view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true);
+                view.setUint16(22, numChannels, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, byteRate, true);
+                view.setUint16(32, blockAlign, true);
+                view.setUint16(34, 16, true);
+                view.setUint32(36, 0x64617461, false);
+                view.setUint32(40, dataSize, true);
+
+                let offset = 44;
+                for (let i = 0; i < pcmData.length; i++, offset += 2) {
+                    view.setInt16(offset, pcmData[i], true);
+                }
+                return new Blob([view], { type: 'audio/wav' });
+            }
+
+            async function generateAiExplanation(prompt, apiKey) {
+                aiTutorModalContainer.style.top = '50%';
+                aiTutorModalContainer.style.left = '50%';
+                aiTutorModalContainer.style.transform = 'translate(-50%, -50%)';
+                aiTutorStatus.innerHTML = `<p>AI 助教思考中...<span class="blinking-cursor"></span></p>`;
+                aiTutorAudio.src = '';
+                aiTutorAudio.hidden = true;
+                aiTutorModal.classList.add('show');
+
+                const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                const ttsApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+                try {
+                    const textPayload = {
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: {
+                            parts: [{ text: "你是一位親切的工程數學助教。請用簡單易懂、口語化的方式，解說以下的微分方程式題目。請先解釋解題的思路，然後逐步說明解題過程。" }]
+                        }
+                    };
+                    const textResponse = await fetch(textApiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(textPayload) });
+                    if (!textResponse.ok) throw new Error(`文字生成失敗：${textResponse.statusText}`);
+                    const textResult = await textResponse.json();
+                    const explanationText = textResult.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!explanationText) throw new Error('無法從 API 獲取有效的文字內容。');
+                    
+                    aiTutorStatus.innerHTML = `<p>正在為您產生語音...<span class="blinking-cursor"></span></p>`;
+
+                    const ttsPayload = {
+                        contents: [{ parts: [{ text: explanationText }] }],
+                         generationConfig: {
+                            responseModalities: ["AUDIO"],
+                            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Sadaltager" } } }
+                        }
+                    };
+                    const audioResponse = await fetch(ttsApiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ttsPayload) });
+                    if (!audioResponse.ok) throw new Error(`語音生成失敗：${audioResponse.statusText}`);
+                    const audioResult = await audioResponse.json();
+                    const audioData = audioResult?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+                    const mimeType = audioResult?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
+
+                    if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                        const sampleRate = parseInt(mimeType.match(/rate=(\d+)/)[1], 10);
+                        const pcmData = base64ToArrayBuffer(audioData);
+                        const pcm16 = new Int16Array(pcmData);
+                        const wavBlob = pcmToWav(pcm16, sampleRate);
+                        const audioUrl = URL.createObjectURL(wavBlob);
+                        aiTutorStatus.innerHTML = `<p>語音解說已就緒！</p>`;
+                        aiTutorAudio.src = audioUrl;
+                        aiTutorAudio.hidden = false;
+                        aiTutorAudio.play();
+                    } else {
+                        throw new Error('無法從 API 獲取有效的語音內容。');
+                    }
+                } catch (error) {
+                    console.error("AI Tutor Error:", error);
+                    aiTutorStatus.innerHTML = `<p class="text-red-600">抱歉，AI 助教出了一點問題：<br>${error.message}</p><p class="text-sm mt-2">請確認您的 API Key 是否正確且有足夠的權限。</p>`;
+                }
+            }
+
+            function renderTabs(container, items, activeIndex, isPractice) {
+                container.innerHTML = items.map((ex, i) => {
+                    const tabTitle = isPractice ? `問題 ${i+1}` : ex.title;
+                    return `<button data-index="${i}" class="tab-button text-sm sm:text-base py-2 px-1 sm:px-4 rounded-md transition duration-300 ${i === activeIndex ? 'active-tab' : 'inactive-tab'}">${tabTitle}</button>`;
+                }).join('');
+
+                document.querySelectorAll(`#${container.id} .tab-button`).forEach(button => {
+                    button.addEventListener('click', () => {
+                        const newIndex = parseInt(button.dataset.index);
+                        if (isPractice) {
+                            activePracticeIndex = newIndex;
+                            renderPracticeContent(newIndex);
+                            renderTabs(practiceTabsContainer, practiceExamples, newIndex, true);
+                        } else {
+                            activeExampleIndex = newIndex;
+                            renderExampleContent(newIndex);
+                            renderTabs(exampleTabsContainer, examples, newIndex, false);
+                        }
+                    });
+                });
+            }
+
+            async function renderExampleContent(index) {
+                const example = examples[index];
+                let stepsHtml = example.steps.map((step, i) => `
+                    <div class="border-b border-stone-200">
+                        <button class="accordion-header w-full text-left p-4 focus:outline-none hover:bg-teal-50 transition duration-300 flex justify-between items-center" data-step="${i}">
+                            <span class="font-semibold text-stone-700">${step.title}</span>
+                            <svg class="w-5 h-5 text-teal-600 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-4 bg-stone-50 border-t border-stone-200 text-stone-600 leading-relaxed math-display">${step.content}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                exampleContentContainer.innerHTML = `
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                             <h4 class="text-xl font-bold text-stone-800">${example.title}</h4>
+                             <button id="ai-tutor-button-${index}" data-index="${index}" class="ai-tutor-btn flex items-center gap-2 bg-teal-500 text-white font-bold py-2 px-4 rounded-md shadow-md transition-all duration-300 transform hover:scale-105 disabled:bg-gray-400 disabled:opacity-70 disabled:cursor-not-allowed" title="需要 API Key">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play-circle"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                                 AI助教解說
+                             </button>
+                        </div>
+                        <div class="p-4 bg-amber-50 rounded-lg text-lg math-display">${example.problem}</div>
+                        ${example.source ? `<p class="mt-2 text-sm text-stone-500 text-right">${example.source}</p>` : ''}
+                    </div>
+                    <div class="mb-6">
+                        <h4 class="text-xl font-bold text-stone-800 mb-2">觀察與分析：</h4>
+                        <p class="p-4 bg-sky-50 rounded-lg text-stone-600">${example.analysis}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-bold text-stone-800 mb-2">解題步驟：</h4>
+                        <div class="border border-stone-200 rounded-lg overflow-hidden">${stepsHtml}</div>
+                    </div>
+                `;
+                
+                const aiTutorButton = document.getElementById(`ai-tutor-button-${index}`);
+                const apiKey = localStorage.getItem('googleApiKey');
+                if (!apiKey) {
+                    aiTutorButton.disabled = true;
+                }
+                aiTutorButton.addEventListener('click', (e) => {
+                    const idx = e.currentTarget.dataset.index;
+                    const currentExample = examples[idx];
+                    let stepsText = currentExample.steps.map(s => `${s.title}:\n${s.content.replace(/<br>/g, '\n').replace(/<[^>]*>/g, '')}`).join('\n\n');
+                    const prompt = `題目：\n${currentExample.problem.replace(/<[^>]*>/g, '')}\n\n分析：\n${currentExample.analysis}\n\n解題步驟：\n${stepsText}`;
+                    generateAiExplanation(prompt, apiKey);
+                });
+                
+                await window.MathJax.typesetPromise();
+
+                document.querySelectorAll('#example-content-container .accordion-header').forEach(header => {
+                    header.addEventListener('click', () => {
+                        const content = header.nextElementSibling;
+                        const icon = header.querySelector('svg');
+                        content.classList.toggle('show');
+                        icon.classList.toggle('rotate-180');
+                    });
+                });
+            }
+
+            async function renderPracticeContent(index) {
+                const example = practiceExamples[index];
+                practiceContentContainer.innerHTML = `
+                    <div class="mb-6">
+                        <h4 class="text-xl font-bold text-stone-800 mb-2">題目：</h4>
+                        <div class="p-4 bg-amber-50 rounded-lg text-lg math-display">${example.problem}</div>
+                        ${example.source ? `<p class="mt-2 text-sm text-stone-500 text-right">${example.source}</p>` : ''}
+                    </div>
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-2">
+                             <h4 class="text-xl font-bold text-stone-800">觀察與分析：</h4>
+                             <button id="hint-button" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md shadow-md transition-transform transform hover:scale-105">提示</button>
+                        </div>
+                        <div id="analysis-container" class="transition duration-500 ease-in-out">
+                            <div class="bg-gray-100 p-4 rounded-lg text-center text-gray-500">
+                                <span class="text-2xl">🔒</span><br>
+                                點擊上方的「提示」按鈕來查看分析思路。
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-xl font-bold text-stone-800">解題步驟：</h4>
+                        </div>
+                        <div id="steps-container" class="transition duration-500 ease-in-out">
+                            <div class="bg-gray-100 p-4 rounded-lg text-center text-gray-500">
+                                <span class="text-2xl">🔒</span><br>
+                                請輸入密碼解鎖解題步驟
+                                <div class="mt-4 flex items-center justify-center">
+                                    <input id="password-input" type="password" placeholder="****" class="px-4 py-2 text-center rounded-md border-2 border-gray-300 focus:border-teal-500 focus:outline-none w-32">
+                                    <button id="unlock-button" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md shadow-md ml-2 transition-transform transform hover:scale-105">解鎖</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                await window.MathJax.typesetPromise();
+
+                const hintButton = document.getElementById('hint-button');
+                const analysisContainer = document.getElementById('analysis-container');
+                const unlockButton = document.getElementById('unlock-button');
+                const passwordInput = document.getElementById('password-input');
+                const stepsContainer = document.getElementById('steps-container');
+                const defaultPassword = '0000';
+
+                hintButton.addEventListener('click', async () => {
+                    analysisContainer.innerHTML = `<p class="p-4 bg-sky-50 rounded-lg text-stone-600">${example.analysis}</p>`;
+                    await window.MathJax.typesetPromise();
+                });
+
+                const unlockSteps = async () => {
+                     if (passwordInput.value === defaultPassword) {
+                        let stepsHtml = example.steps.map((step, i) => `
+                            <div class="border-b border-stone-200">
+                                <button class="accordion-header w-full text-left p-4 focus:outline-none hover:bg-teal-50 transition duration-300 flex justify-between items-center" data-step="${i}">
+                                    <span class="font-semibold text-stone-700">${step.title}</span>
+                                    <svg class="w-5 h-5 text-teal-600 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                <div class="accordion-content">
+                                    <div class="p-4 bg-stone-50 border-t border-stone-200 text-stone-600 leading-relaxed math-display">${step.content}</div>
+                                </div>
+                            </div>
+                        `).join('');
+
+                        stepsContainer.innerHTML = `<div class="border border-stone-200 rounded-lg overflow-hidden">${stepsHtml}</div>`;
+
+                        document.querySelectorAll('#steps-container .accordion-header').forEach(header => {
+                            header.addEventListener('click', () => {
+                                const content = header.nextElementSibling;
+                                const icon = header.querySelector('svg');
+                                content.classList.toggle('show');
+                                icon.classList.toggle('rotate-180');
+                            });
+                        });
+                        await window.MathJax.typesetPromise();
+                    } else {
+                        alert('密碼錯誤，請再試一次。');
+                    }
+                };
+
+                unlockButton.addEventListener('click', unlockSteps);
+                passwordInput.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        unlockSteps();
+                    }
+                });
+            }
+            
+            renderTabs(exampleTabsContainer, examples, activeExampleIndex, false);
+            renderExampleContent(activeExampleIndex);
+            renderTabs(practiceTabsContainer, practiceExamples, activePracticeIndex, true);
+            renderPracticeContent(activePracticeIndex);
+
+        });
+    </script>
+</body>
+</html>
